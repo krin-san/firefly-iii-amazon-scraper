@@ -11,7 +11,7 @@ from amazon_scraper.firefly.models import *
 
 
 def run(runner: Runner):
-    groups = [TransactionGroup(json) for json in runner.firefly.search_transactions(f"{runner.base_query} no_notes:true")]
+    groups = runner.firefly.search_transactions(f"{runner.base_query} no_notes:true")
     if len(groups) == 0:
         logging.info("No new transaction groups were found.")
         return
@@ -37,7 +37,7 @@ def process_order(order_id: str, groups: List[TransactionGroup], runner: Runner)
             group.add_tags([Tags.ERROR])
 
             if not runner.args.dry_run:
-                runner.firefly.update_transaction(group.id, group.to_json())
+                runner.firefly.update_transaction(group)
 
         return True
 
@@ -63,7 +63,7 @@ def process_order(order_id: str, groups: List[TransactionGroup], runner: Runner)
                 if runner.args.dry_run:
                     logging.debug(f"{format_tx_group(group)}\n~ PUT: {str(group.to_json())}")
                 else:
-                    runner.firefly.update_transaction(group.id, group.to_json())
+                    runner.firefly.update_transaction(group)
 
                 matched = True
                 unassigned_shipments.pop(index)
@@ -84,7 +84,7 @@ def process_order(order_id: str, groups: List[TransactionGroup], runner: Runner)
         if runner.args.dry_run:
             logging.debug(f"{format_tx_group(group)}\n~ PUT: {str(group.to_json())}")
         else:
-            runner.firefly.update_transaction(group.id, group.to_json())
+            runner.firefly.update_transaction(group)
 
         return True
 
@@ -106,7 +106,7 @@ def process_order(order_id: str, groups: List[TransactionGroup], runner: Runner)
             if runner.args.dry_run:
                 logging.debug(f"{format_tx_group(group)}\n~ PUT: {str(group.to_json())}")
             else:
-                runner.firefly.update_transaction(group.id, group.to_json())
+                runner.firefly.update_transaction(group)
 
     return True
 

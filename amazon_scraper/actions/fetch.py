@@ -128,11 +128,3 @@ def match_tx_group(group: TransactionGroup, shipment: AmazonShipment, order_url:
 
         for index in range(item_count):
             match_tx(group.transactions[index], shipment.items[index], order_url, set_amount)
-
-def match_tx(tx: Transaction, item: AmazonShipmentItem, order_url: str, set_amount: bool):
-    if set_amount:
-        tx.amount = item.amount
-
-    tx.external_url = order_url
-    tx.internal_reference = f"{item.price_note} @ {item.url}"
-    tx.notes = item.name

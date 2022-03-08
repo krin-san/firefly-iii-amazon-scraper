@@ -1,3 +1,4 @@
+import logging
 import random
 import sys
 import time
@@ -39,7 +40,7 @@ class AmazonDriver:
             driver.find_element(By.ID, "continue").click()
             rand_sleep()
         except NoSuchElementException:
-            print("No continue button found; ignoring...")
+            logging.debug("No continue button found; ignoring...")
 
         driver.find_element(By.ID, "ap_password").clear()
         driver.find_element(By.ID, "ap_password").send_keys(password)
@@ -60,6 +61,6 @@ def rand_sleep(max_seconds=5):
     """
 
     seconds = random.randint(2, max_seconds)
-    print(f"Sleeping for {seconds} seconds...")
+    logging.debug(f"Sleeping for {seconds} seconds...")
     sys.stdout.flush()
     time.sleep(seconds)

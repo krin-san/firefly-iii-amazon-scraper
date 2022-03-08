@@ -1,4 +1,5 @@
 import json
+import logging
 
 import requests
 
@@ -18,7 +19,7 @@ class FireflyAPI:
             response.raise_for_status()
             return response
         except:
-            print(f"\n! Failed response body: {response.json()}")
+            logging.error(f"Error response body: {response.json()}")
             raise
 
     def _get(self, endpoint, params=None):

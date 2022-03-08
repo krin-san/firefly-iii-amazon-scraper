@@ -28,7 +28,7 @@ class Transaction:
         return self._id
 
     def __str__(self):
-        return f'jid: {self._id}, amount: {self._currency_code} {float(self.amount):.2f}, description: {self.description}, tags: {self.tags}, url: {self.external_url}, notes: {self.notes}'
+        return f'jid: {self._id}, amount: {self._currency_code} {float(self.amount):.2f}, description: {self.description}, tags: {self.tags}, url: {self.external_url}, iref: {self.internal_reference}, notes: {self.notes}'
 
     def copy(self):
         return Transaction({

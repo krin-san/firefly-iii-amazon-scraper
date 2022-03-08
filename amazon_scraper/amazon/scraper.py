@@ -1,4 +1,5 @@
 import json
+import logging
 import traceback
 
 from amazon_scraper.amazon.cache import FileCache
@@ -30,14 +31,14 @@ class AmazonScraper:
         cache = self.cache.get(f"{order_id}.json")
         if cache is not None:
             try:
-                print(f"[{order_id}] Loading order from cache")
+                logging.debug(f"[{order_id}] Loading order from cache")
                 return AmazonOrder.from_json(json.loads(cache))
             except:
-                print(f"[{order_id}] Loading failed with error:\n{traceback.format_exc()}")
+                logging.error(f"[{order_id}] Loading from cache failed with error:\n{traceback.format_exc()}")
                 pass
 
         if "br" not in self.__dict__:
-            print("Setting up Selenium driver and logging in...")
+            logging.debug("Setting up Selenium driver and logging in...")
             self.setup_driver()
             self.setup_driver = lambda: None
 
@@ -58,6 +59,6 @@ class AmazonScraper:
 
             return order
         except:
-            print(f"[{order_id}] Loading from server failed with error:\n{traceback.format_exc()}")
+            logging.error(f"[{order_id}] Loading from server failed with error:\n{traceback.format_exc()}")
             self.cache.add(f"{order_id}.html", html)
             raise

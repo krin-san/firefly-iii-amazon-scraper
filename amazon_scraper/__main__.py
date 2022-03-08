@@ -1,5 +1,7 @@
 import argparse
+import logging
 import pkgutil
+import sys
 
 from dotenv import dotenv_values
 
@@ -38,6 +40,14 @@ def setup_parser(is_cli: bool):
         action="store_true",
         help="Run in read-only mode, without changing any data in Firefly III database.",
     )
+    parser.add_argument(
+        "--log",
+        help="Filename for storing all logging messages. Logs to stdout by default.",
+    )
+    parser.add_argument(
+        "--log-level",
+        help="Log level. Not set by default, logging all produced messages.",
+    )
 
     subparsers = parser.add_subparsers(title="command", dest="command", required=is_cli)
     for importer, modname, _ in pkgutil.iter_modules(actions.__path__):
@@ -49,21 +59,36 @@ def setup_parser(is_cli: bool):
 
     return parser
 
+def setup_logger(args: AppArgs):
+    logger = logging.getLogger()
+
+    if (filename := args.log):
+        logger.addHandler(logging.FileHandler(filename))
+    else:
+        logger.addHandler(logging.StreamHandler(sys.stdout))
+
+    if (level := args.log_level):
+        logger.setLevel(getattr(logging, level.upper()))
+    else:
+        logger.setLevel(logging.NOTSET)
+
 def setup(is_cli: bool = True, args = None):
     env = setup_env()
-    parser = setup_parser(is_cli=is_cli)
-    parsed_args = parser.parse_args(args=args)
+    parser = setup_parser(is_cli)
+    args = parser.parse_args(args)
+    app_args = AppArgs(args)
+    setup_logger(app_args)
     amazon = AmazonScraper(
         host=env["AMAZON_HOST"],
         user=env["AMAZON_USER"],
         password=env["AMAZON_PASSWORD"],
-        cache_dir=parsed_args.cache_dir,
+        cache_dir=app_args.cache_dir,
     )
     firefly = FireflyAPI(
         host=env["FIREFLY_HOST"],
         auth_token=env["FIREFLY_TOKEN"],
     )
-    return (parsed_args, Runner(amazon, firefly, AppArgs(parsed_args)))
+    return (args, Runner(amazon, firefly, app_args))
 
 def main():
     (args, runner) = setup()

@@ -3,8 +3,7 @@ class Tags:
     LAST = "amazon_match_last"
     MANUAL = "amazon_manual"
     TODO = "amazon_todo"
-    ERROR = "amazon_error"
 
     @staticmethod
     def all():
-        return [Tags.MATCH, Tags.LAST, Tags.MANUAL, Tags.TODO, Tags.ERROR]
+        return [Tags.MATCH, Tags.LAST, Tags.MANUAL, Tags.TODO]

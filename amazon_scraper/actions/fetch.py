@@ -30,16 +30,10 @@ def process_order(order_id: str, groups: List[TransactionGroup], runner: Runner)
 
     try:
         order = runner.amazon.scrape_order(order_id)
-        logging.info(f"[{order_id}] Amazon order summary:\n" + order.summary)
+        logging.info(f"[{order_id}] Amazon order summary:\n" + "  " + "\n  ".join(order.summary.split(sep="\n")))
     except:
-        logging.info(f"[{order_id}] Marking all transaction with ERROR tag because of error:\n{traceback.format_exc()}")
-        for group in groups:
-            group.add_tags([Tags.ERROR])
-
-            if not runner.args.dry_run:
-                runner.firefly.update_transaction(group)
-
-        return True
+        logging.info(f"[{order_id}] Order scraping failed with error:\n{traceback.format_exc()}")
+        return False
 
     if len(groups) != len(order.shipments):
         logging.warning(f"[{order_id}] Groups count ({len(groups)}) != Shipments count ({len(order.shipments)}). Probably a pagination issue.")
@@ -59,11 +53,7 @@ def process_order(order_id: str, groups: List[TransactionGroup], runner: Runner)
                 logging.info(f'{format_tx_group(group)}\n~ Matched {"with promotion " if not match_exactly else ""}to\n{shipment.notes()}')
                 group.set_tags([Tags.MATCH])
                 match_tx_group(group, shipment, order.url)
-
-                if runner.args.dry_run:
-                    logging.debug(f"{format_tx_group(group)}\n~ PUT: {str(group.to_json())}")
-                else:
-                    runner.firefly.update_transaction(group)
+                commit_tx_group(group, runner)
 
                 matched = True
                 unassigned_shipments.pop(index)
@@ -80,11 +70,7 @@ def process_order(order_id: str, groups: List[TransactionGroup], runner: Runner)
 
         group.set_tags([Tags.LAST])
         match_tx_group(group, shipment, order.url)
-
-        if runner.args.dry_run:
-            logging.debug(f"{format_tx_group(group)}\n~ PUT: {str(group.to_json())}")
-        else:
-            runner.firefly.update_transaction(group)
+        commit_tx_group(group, runner)
 
         return True
 
@@ -103,10 +89,7 @@ def process_order(order_id: str, groups: List[TransactionGroup], runner: Runner)
             tx.external_url = order.url
             tx.notes = remaining_shipment_notes
 
-            if runner.args.dry_run:
-                logging.debug(f"{format_tx_group(group)}\n~ PUT: {str(group.to_json())}")
-            else:
-                runner.firefly.update_transaction(group)
+            commit_tx_group(group, runner)
 
     return True
 
@@ -128,3 +111,10 @@ def match_tx_group(group: TransactionGroup, shipment: AmazonShipment, order_url:
 
         for index in range(item_count):
             match_tx(group.transactions[index], shipment.items[index], order_url, set_amount)
+
+def commit_tx_group(group: TransactionGroup, runner: Runner):
+    if runner.args.dry_run:
+        logging.info(f"~ Resulting transaction group:\n{format_tx_group(group)}")
+        logging.debug(f"{format_tx_group(group)}\n~ PUT: {str(group.to_json())}")
+    else:
+        runner.firefly.update_transaction(group)

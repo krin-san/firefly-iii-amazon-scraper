@@ -67,14 +67,7 @@ class TestActionsFetch(unittest.TestCase):
                 Transaction("1", "123 noise ABC", "4.00"),
             ]),
         ]
-        expected = [
-            TransactionGroup("1", None, [
-                Transaction(
-                    "1", "123 noise ABC", "4.00",
-                    tags=[Tags.ERROR],
-                ),
-            ]),
-        ]
+        expected = []
         self.process_and_compare(given, expected)
 
     def test_1by1_match_equalPrice(self):

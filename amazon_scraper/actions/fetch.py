@@ -11,19 +11,29 @@ from amazon_scraper.firefly.models import *
 
 
 def run(runner: Runner):
-    groups = runner.firefly.search_transactions(f"{runner.base_query} no_notes:true")
-    if len(groups) == 0:
-        logging.info("No new transaction groups were found.")
-        return
+    last_groups = []
 
-    logging.info(f"Pending transaction groups:\n{format_tx_groups(groups)}")
-    assert all([len(x.transactions) == 1 for x in groups]), f"Unexpected number of transactions (!= 1)"
+    while True:
+        keyfunc = lambda x: x.amazon_info.order_id
+        groups = runner.firefly.search_transactions(f"{runner.base_query} no_notes:true")
+        groups = sorted(groups, key=keyfunc)
 
-    for order_id, iterable in groupby(groups, key=lambda x: x.amazon_info.order_id):
-        order_groups = list(iterable)
+        if len(groups) == 0 or groups == last_groups:
+            logging.info("No new transaction groups were found.")
+            return
 
-        if process_order(order_id, order_groups, runner):
-            logging.info(f"Updated groups:\n{format_tx_urls(order_groups, runner.firefly.host)}")
+        last_groups = groups
+        logging.debug(f"Pending transaction groups:\n{format_list(groups)}")
+        assert all([len(x.transactions) == 1 for x in groups]), f"Unexpected number of transactions (!= 1)"
+
+        for order_id, iterable in groupby(groups, key=keyfunc):
+            order_groups = list(iterable)
+
+            if process_order(order_id, order_groups, runner):
+                logging.info(f"[{order_id}] Updated groups:\n{format_tx_urls(order_groups, runner.firefly.host)}")
+
+        if runner.args.dry_run:
+            return
 
 def process_order(order_id: str, groups: List[TransactionGroup], runner: Runner):
     logging.info(f"[{order_id}] Processing order:\n{format_tx_groups(groups)}")

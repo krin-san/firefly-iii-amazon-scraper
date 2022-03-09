@@ -35,6 +35,11 @@ class TransactionGroup:
     def amount(self):
         return f'{sum([float(item.amount.replace(",", ".")) for item in self.transactions]):.2f}'
 
+    def __eq__(self, other): 
+        if not isinstance(other, TransactionGroup):
+            return False
+        return self.id == other.id and self.group_title == other.group_title and self.transactions == other.transactions
+
     def __str__(self):
         return f'id: {self.id}, group_title: {self.group_title}, transactions:\n' + "\n".join([str(item) for item in self.transactions])
 

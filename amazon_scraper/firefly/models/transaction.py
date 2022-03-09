@@ -50,6 +50,11 @@ class Transaction:
     def id(self):
         return self._id
 
+    def __eq__(self, other): 
+        if not isinstance(other, Transaction):
+            return False
+        return self.id == other.id and self.description == other.description and self.amount == other.amount and self.currency_code == other.currency_code and self.notes == other.notes and self.tags == other.tags and self.internal_reference == other.internal_reference and self.external_url == other.external_url
+
     def __str__(self):
         return f'jid: {self._id}, amount: {self.currency_code} {float(self.amount):.2f}, description: {self.description}, tags: {self.tags}, url: {self.external_url}, iref: {self.internal_reference}, notes: {self.notes}'
 

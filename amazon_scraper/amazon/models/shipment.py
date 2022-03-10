@@ -38,6 +38,9 @@ class AmazonShipment:
             "items": [AmazonShipmentItem.from_json(item) for item in json["items"]]
         })
 
+    def __str__(self):
+        return f"Delivery {self.number}: {self.currency} {self.amount}" + "\n- " + "\n- ".join([str(item) for item in self.items])
+
     @cached_property
     def currency(self):
         return self.items[0].currency
@@ -45,9 +48,3 @@ class AmazonShipment:
     @cached_property
     def amount(self):
         return f'{sum([float(item.amount) * float(item.quantity) for item in self.items]):.2f}'
-
-    def notes(self):
-        return "\n".join([
-            f"Delivery {self.number}: {self.currency} {self.amount}",
-            *[item.notes() for item in self.items],
-        ])

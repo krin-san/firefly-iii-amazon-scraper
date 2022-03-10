@@ -36,11 +36,11 @@ def run(runner: Runner):
             return
 
 def process_order(order_id: str, groups: List[TransactionGroup], runner: Runner):
-    logging.info(f"[{order_id}] Processing order:\n{format_tx_groups(groups)}")
+    logging.info(f"[{order_id}] Processing order with {len(groups)} transactions:\n{format_list(groups)}")
 
     try:
         order = runner.amazon.scrape_order(order_id)
-        logging.info(f"[{order_id}] Amazon order summary:\n" + "  " + "\n  ".join(order.summary.split(sep="\n")))
+        logging.info(f"[{order_id}] Amazon order summary:\n" + pad_strings(order.summary))
     except:
         logging.info(f"[{order_id}] Order scraping failed with error:\n{traceback.format_exc()}")
         return False
@@ -60,7 +60,7 @@ def process_order(order_id: str, groups: List[TransactionGroup], runner: Runner)
             match_with_promo = group.amount == f"{float(shipment.amount) - order.promotion:.2f}"
 
             if match_exactly or match_with_promo:
-                logging.info(f'{format_tx_group(group)}\n~ Matched {"with promotion " if not match_exactly else ""}to\n{shipment.notes()}')
+                logging.info(f'[{order_id}] Matched {"with promotion " if not match_exactly else ""}\n{format_item(group)}\n{format_item(shipment)}')
                 group.set_tags([Tags.MATCH])
                 match_tx_group(group, shipment, order.url)
                 commit_tx_group(group, runner)
@@ -70,13 +70,13 @@ def process_order(order_id: str, groups: List[TransactionGroup], runner: Runner)
                 break
 
         if not matched:
-            logging.info(f"{format_tx_group(group)}\n~ Found no direct matches")
+            logging.debug(f"[{order_id}] Found no direct matches:\n{format_item(group)}")
             unassigned_groups.append(group)
 
     if len(unassigned_groups) == 1 and len(unassigned_shipments) == 1:
         group = unassigned_groups[0]
         shipment = unassigned_shipments[0]
-        logging.info(f"{format_tx_group(group)}\n~ Matched by last_standing rule to\n{shipment.notes()}")
+        logging.info(f"[{order_id}] Matched by last_standing rule:\n{format_item(group)}\n{format_item(shipment)}")
 
         group.set_tags([Tags.LAST])
         match_tx_group(group, shipment, order.url)
@@ -88,9 +88,9 @@ def process_order(order_id: str, groups: List[TransactionGroup], runner: Runner)
         remaining_shipment_notes = "\n\n".join([
             f'[All transaction for this order]({runner.firefly.host}/search?search={unassigned_groups[0].amazon_info.original_id})',
             "One of the remaining shipments correspond to this transaction:",
-            *[item.notes() for item in unassigned_shipments],
+            *[pad_strings(str(item)) for item in unassigned_shipments],
         ])
-        logging.info(f"~ Filling for manual resolution\n\n{format_tx_groups(unassigned_groups)}\n<<<\n{remaining_shipment_notes}\n>>>")
+        logging.info(f"[{order_id}] Filling for manual resolution:\n{format_list(unassigned_groups)}\nwith notes:\n{remaining_shipment_notes}")
 
         for group in unassigned_groups:
             group.set_tags([Tags.MANUAL, Tags.TODO])
@@ -112,7 +112,7 @@ def match_tx_group(group: TransactionGroup, shipment: AmazonShipment, order_url:
     else:
         set_amount = group.amount == shipment.amount
         if not set_amount:
-            logging.warning(f"Group amount {group.amount} doesn't match shipment amount {shipment.amount} and need to be set manually.")
+            logging.warning(f"[{group.amazon_info.order_id}] Group amount {group.amount} doesn't match shipment amount {shipment.amount} and need to be set manually.")
             group.add_tags([Tags.TODO])
 
         group.group_title = tx.description
@@ -124,7 +124,7 @@ def match_tx_group(group: TransactionGroup, shipment: AmazonShipment, order_url:
 
 def commit_tx_group(group: TransactionGroup, runner: Runner):
     if runner.args.dry_run:
-        logging.info(f"~ Resulting transaction group:\n{format_tx_group(group)}")
-        logging.debug(f"{format_tx_group(group)}\n~ PUT: {str(group.to_json())}")
+        logging.info(f"[{group.amazon_info.order_id}] Resulting transaction group:\n{format_item(group)}")
+        logging.debug(f"~ PUT: {str(group.to_json())}")
     else:
         runner.firefly.update_transaction(group)

@@ -29,20 +29,16 @@ class AmazonOrder:
 
     @staticmethod
     def _parse_summary(summary: Tag):
-        return "\n".join([
-            "# " + summary.find_all(re.compile('^h[1-6]$'))[0].text.strip(),
-            *filter(lambda x: x, [
-                " ".join([
-                    cell.text.strip() for cell in row.select("div.a-column span")
-                ]) for row in summary.select("div.a-row")
-            ]),
-        ])
+        return "\n".join(list(filter(lambda x: x, [
+            " ".join([
+                cell.text.strip() for cell in row.select("div.a-column span")
+            ]) for row in summary.select("div.a-row")
+        ])))
 
     @staticmethod
     def _parse_transactions(transactions: Tag):
         return "\n".join([
-            "# " + transactions.a.text.strip(),
-            *[re.sub(r"\s+", " ", row.text.strip()) for row in transactions.select("div.a-row")],
+            re.sub(r"\s+", " ", row.text.strip()) for row in transactions.select("div.a-row")
         ])
 
     @staticmethod

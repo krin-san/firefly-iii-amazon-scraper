@@ -46,7 +46,7 @@ def setup_parser(is_cli: bool):
     )
     parser.add_argument(
         "--log-level",
-        help="Log level. Not set by default, logging all produced messages.",
+        help="Log level. By default Info level and above messages are enabled.",
     )
 
     subparsers = parser.add_subparsers(title="command", dest="command", required=is_cli)
@@ -70,7 +70,7 @@ def setup_logger(args: AppArgs):
     if (level := args.log_level):
         logger.setLevel(getattr(logging, level.upper()))
     else:
-        logger.setLevel(logging.NOTSET)
+        logger.setLevel(logging.INFO)
 
 def setup(is_cli: bool = True, args = None):
     env = setup_env()

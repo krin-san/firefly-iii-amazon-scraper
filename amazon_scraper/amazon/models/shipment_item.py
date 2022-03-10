@@ -25,12 +25,9 @@ class AmazonShipmentItem:
     def from_json(json):
         return AmazonShipmentItem(**json)
 
+    def __str__(self):
+        return f"{self.price_note} @ {self.url} | {self.name}"
+
     @cached_property
     def price_note(self):
         return f'{self.currency} {self.amount}{f" x{self.quantity}" if self.quantity > 1 else ""}'
-
-    def notes(self):
-        return "\n".join([
-            f"- {self.price_note} {self.url}   ",
-            f"  {self.name}",
-        ])

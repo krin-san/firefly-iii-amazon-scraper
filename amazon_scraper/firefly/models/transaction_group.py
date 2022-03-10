@@ -41,7 +41,7 @@ class TransactionGroup:
         return self.id == other.id and self.group_title == other.group_title and self.transactions == other.transactions
 
     def __str__(self):
-        return f'id: {self.id}, group_title: {self.group_title}, transactions:\n' + "\n".join([str(item) for item in self.transactions])
+        return f'id: {self.id}, group_title: {self.group_title}, transactions:' + "\n- " + "\n- ".join([str(item) for item in self.transactions])
 
     def to_json(self):
         return {

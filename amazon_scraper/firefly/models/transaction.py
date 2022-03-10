@@ -4,7 +4,7 @@ from amazon_scraper.firefly.models.tags import Tags
 
 
 class Transaction:
-    def __init__(self, id: str, description: str, amount: str, currency_code: str = "EUR", notes: Union[str, None] = None, tags: Union[List[str], None] = None, internal_reference: Union[str, None] = None, external_url: Union[str, None] = None, json: Union[dict, None] = None):
+    def __init__(self, id: int, description: str, amount: str, currency_code: str = "EUR", notes: Union[str, None] = None, tags: Union[List[str], None] = None, internal_reference: Union[str, None] = None, external_url: Union[str, None] = None, json: Union[dict, None] = None):
         self._id = id
         self.description = description
         self.amount = amount
@@ -18,7 +18,7 @@ class Transaction:
     @staticmethod
     def from_json(json: dict):
         return Transaction(
-            id=json["transaction_journal_id"],
+            id=int(json["transaction_journal_id"]),
             description=json["description"],
             amount=json["amount"],
             currency_code=json["currency_code"],
@@ -61,7 +61,7 @@ class Transaction:
     def copy(self):
         return Transaction.from_json({
             **self.to_json(),
-            "transaction_journal_id": "0", # New transaction
+            "transaction_journal_id": 0, # New transaction
             "currency_code": self.currency_code, # Excluded from json
             "amount": "0.01", # Should be > 0
         })

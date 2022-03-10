@@ -6,7 +6,7 @@ from unittest.mock import Mock
 from xml.dom import NotFoundErr
 
 from amazon_scraper.actions import fetch as action
-from amazon_scraper.actions.common import format_tx_groups
+from amazon_scraper.actions.common import format_list
 from amazon_scraper.amazon.models.order import AmazonOrder
 from amazon_scraper.amazon.models.shipment import AmazonShipment
 from amazon_scraper.amazon.models.shipment_item import AmazonShipmentItem
@@ -31,10 +31,9 @@ class TestActionsFetch(unittest.TestCase):
 
     def process_and_compare(self, given: List[TransactionGroup], expected: List[TransactionGroup]):
         action.process_order("123", given, Runner(self.amazon, self.firefly, self.args))
-        # self.update_transaction().assert_has_calls([call(item) for item in expected])
         result: List[TransactionGroup] = [x.args[0] for x in self.update_transaction().call_args_list]
         self.replace_any_values(result, expected)
-        self.assertEqual(result, expected, "Lists differ (result vs expected):\n\n" + "".join(ndiff(format_tx_groups(result).splitlines(keepends=True), format_tx_groups(expected).splitlines(keepends=True))))
+        self.assertEqual(result, expected, "Lists differ (result vs expected):\n\n" + "".join(ndiff(format_list(result).splitlines(keepends=True), format_list(expected).splitlines(keepends=True))))
 
     def replace_any_values(self, result: List[TransactionGroup], expected: List[TransactionGroup]):
         for gi, group in enumerate(expected):
@@ -43,7 +42,7 @@ class TestActionsFetch(unittest.TestCase):
                     tx.notes = result[gi].transactions[ti].notes
 
     def what_is_wrong(self, expected: List[TransactionGroup]):
-        print(f"\nGiven:\n{format_tx_groups([x.args[0] for x in self.update_transaction().call_args_list])}\n\nExpected:\n{format_tx_groups(expected)}\n")
+        print(f"\nGiven:\n{format_list([x.args[0] for x in self.update_transaction().call_args_list])}\n\nExpected:\n{format_list(expected)}\n")
 
     # Tests
 
@@ -64,7 +63,7 @@ class TestActionsFetch(unittest.TestCase):
         self.amazon.scrape_order.side_effect = NotFoundErr()
         given = [
             TransactionGroup("1", None, [
-                Transaction("1", "123 noise ABC", "4.00"),
+                Transaction(1, "123 noise ABC", "4.00"),
             ]),
         ]
         expected = []
@@ -78,13 +77,13 @@ class TestActionsFetch(unittest.TestCase):
         ])
         given = [
             TransactionGroup("1", None, [
-                Transaction("1", "123 noise ABC", "5.00"),
+                Transaction(1, "123 noise ABC", "5.00"),
             ]),
         ]
         expected = [
             TransactionGroup("1", None, [
                 Transaction(
-                    "1", "123 noise ABC", "5.00",
+                    1, "123 noise ABC", "5.00",
                     tags=[Tags.MATCH],
                     notes="Socks",
                     internal_reference="EUR 2.50 x2 @ AMAZON/item/20",
@@ -102,13 +101,13 @@ class TestActionsFetch(unittest.TestCase):
         ], promotion=1.0)
         given = [
             TransactionGroup("1", None, [
-                Transaction("1", "123 noise ABC", "4.00"),
+                Transaction(1, "123 noise ABC", "4.00"),
             ]),
         ]
         expected = [
             TransactionGroup("1", None, [
                 Transaction(
-                    "1", "123 noise ABC", "4.00",
+                    1, "123 noise ABC", "4.00",
                     tags=[Tags.MATCH],
                     notes="Socks",
                     internal_reference="EUR 2.50 x2 @ AMAZON/item/20",
@@ -127,20 +126,20 @@ class TestActionsFetch(unittest.TestCase):
         ])
         given = [
             TransactionGroup("1", None, [
-                Transaction("1", "123 noise ABC", "11.00"), # 2.5*2+5 = 10 != 11
+                Transaction(1, "123 noise ABC", "11.00"), # 2.5*2+5 = 10 != 11
             ]),
         ]
         expected = [
             TransactionGroup("1", "123 noise ABC", [
                 Transaction(
-                    "1", "123 noise ABC", "11.00",
+                    1, "123 noise ABC", "11.00",
                     tags=[Tags.LAST, Tags.TODO],
                     notes="Socks",
                     internal_reference="EUR 2.50 x2 @ AMAZON/item/20",
                     external_url="AMAZON/order/123",
                 ),
                 Transaction(
-                    "0", "123 noise ABC", "0.01",
+                    0, "123 noise ABC", "0.01",
                     tags=[Tags.LAST, Tags.TODO],
                     notes="Tie",
                     internal_reference="EUR 5.00 @ AMAZON/item/21",
@@ -158,13 +157,13 @@ class TestActionsFetch(unittest.TestCase):
         ])
         given = [
             TransactionGroup("1", None, [
-                Transaction("1", "123 noise ABC", "6.00"), # +1 EUR delivery
+                Transaction(1, "123 noise ABC", "6.00"), # +1 EUR delivery
             ]),
         ]
         expected = [
             TransactionGroup("1", None, [
                 Transaction(
-                    "1", "123 noise ABC", "6.00",
+                    1, "123 noise ABC", "6.00",
                     tags=[Tags.LAST],
                     notes="Socks",
                     internal_reference="EUR 2.50 x2 @ AMAZON/item/20",
@@ -186,23 +185,23 @@ class TestActionsFetch(unittest.TestCase):
         ])
         given = [
             TransactionGroup("1", None, [
-                Transaction("1", "123 noise ABC", "20.00"),
+                Transaction(1, "123 noise ABC", "20.00"),
             ]),
             TransactionGroup("2", None, [
-                Transaction("2", "123 noise DEF", "10.00"),
+                Transaction(2, "123 noise DEF", "10.00"),
             ]),
         ]
         expected = [
             TransactionGroup("1", "123 noise ABC", [
                 Transaction(
-                    "1", "123 noise ABC", "10.00",
+                    1, "123 noise ABC", "10.00",
                     tags=[Tags.MATCH],
                     notes="Coffee",
                     internal_reference="EUR 10.00 @ AMAZON/item/10",
                     external_url="AMAZON/order/123",
                 ),
                 Transaction(
-                    "0", "123 noise ABC", "10.00",
+                    0, "123 noise ABC", "10.00",
                     tags=[Tags.MATCH],
                     notes="Tea",
                     internal_reference="EUR 5.00 x2 @ AMAZON/item/11",
@@ -211,14 +210,14 @@ class TestActionsFetch(unittest.TestCase):
             ]),
             TransactionGroup("2", "123 noise DEF", [
                 Transaction(
-                    "2", "123 noise DEF", "5.00",
+                    2, "123 noise DEF", "5.00",
                     tags=[Tags.MATCH],
                     notes="Socks",
                     internal_reference="EUR 2.50 x2 @ AMAZON/item/20",
                     external_url="AMAZON/order/123",
                 ),
                 Transaction(
-                    "0", "123 noise DEF", "5.00",
+                    0, "123 noise DEF", "5.00",
                     tags=[Tags.MATCH],
                     notes="Tie",
                     internal_reference="EUR 5.00 @ AMAZON/item/21",
@@ -240,16 +239,16 @@ class TestActionsFetch(unittest.TestCase):
         ])
         given = [
             TransactionGroup("1", None, [
-                Transaction("1", "123 noise ABC", "21.00"),
+                Transaction(1, "123 noise ABC", "21.00"),
             ]),
             TransactionGroup("2", None, [
-                Transaction("2", "123 noise DEF", "11.00"),
+                Transaction(2, "123 noise DEF", "11.00"),
             ]),
         ]
         expected = [
             TransactionGroup("1", None, [
                 Transaction(
-                    "1", "123 noise ABC", "21.00",
+                    1, "123 noise ABC", "21.00",
                     tags=[Tags.MANUAL, Tags.TODO],
                     notes=ANY_VALUE,
                     external_url="AMAZON/order/123",
@@ -257,7 +256,7 @@ class TestActionsFetch(unittest.TestCase):
             ]),
             TransactionGroup("2", None, [
                 Transaction(
-                    "2", "123 noise DEF", "11.00",
+                    2, "123 noise DEF", "11.00",
                     tags=[Tags.MANUAL, Tags.TODO],
                     notes=ANY_VALUE,
                     external_url="AMAZON/order/123",

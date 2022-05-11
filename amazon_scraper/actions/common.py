@@ -7,7 +7,7 @@ from amazon_scraper.firefly.models import *
 def pad_strings(string: str, first: str = "  ", each: str = "  "):
     return first + f"\n{each}".join(string.split(sep="\n"))
 
-def format_item(object):
+def format_item(object: TransactionGroup):
     return pad_strings(str(object), first="> ")
 
 def format_list(groups: List[TransactionGroup]):

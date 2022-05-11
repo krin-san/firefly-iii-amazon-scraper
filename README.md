@@ -23,17 +23,17 @@ Rename `.env.example` file to `.env` and add connection details both for Amazon 
 
 Perform a dry run to ensure Amazon scraper can login to your account and to check if Firefly transaction changes look good to you. In dry run mode tool will process just the first page full of Amazon transactions from Firefly and won't commit any changes.
 ```bash
-python -m amazon_scraper --log-level DEBUG --dry-run fetch
+python3 -m amazon_scraper --log-level DEBUG --dry-run fetch
 ```
 
 When ready, run tool in normal mode to process all transactions:
 ```bash
-python -m amazon_scraper fetch
+python3 -m amazon_scraper fetch
 ```
 
 # Requirements
 
-* Python 3.8+ (tested on 3.8.12)
+* Python >= 3.8 (tested on 3.8.12 and 3.9.12)
 * `geckodriver` installed and and in your `PATH`
 * Python packages:
   * `python-dotenv` – for storing connection details
@@ -43,14 +43,14 @@ python -m amazon_scraper fetch
 
 All packages can with installed with the following command:
 ```bash
-pip install python-dotenv requests selenium beautifulsoup4 lxml
+pip3 install python-dotenv requests selenium beautifulsoup4 lxml
 ```
 
 # Contributing
 
 If you see a bug and you can fix it yourself, please open a PR, otherwise feel free to open an issue for it.
 
-If you'd like to add a new feature, feel free to do that. I found Jupyter Notebook pretty useful developing or trying out new things so you can start shaping your new actions using the `amazon.ipynb` notebook. Before opening PR please ensure that all tests succeed with `python -m unittest tests/*.py`.
+If you'd like to add a new feature, feel free to do that. I found Jupyter Notebook pretty useful developing or trying out new things so you can start shaping your new actions using the `amazon.ipynb` notebook. Before opening PR please ensure that all tests succeed with `python3 -m unittest tests/*.py`.
 
 # License
 

@@ -37,7 +37,7 @@ class AmazonScraper:
                 logging.error(f"[{order_id}] Loading from cache failed with error:\n{traceback.format_exc()}")
                 pass
 
-        if "br" not in self.__dict__:
+        if "driver" not in self.__dict__:
             logging.debug("Setting up Selenium driver and logging in...")
             self.setup_driver()
             self.setup_driver = lambda: None

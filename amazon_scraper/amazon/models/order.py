@@ -48,6 +48,14 @@ class AmazonOrder:
             "shipments": [AmazonShipment.from_json(item) for item in json["shipments"]]
         })
 
+    def __str__(self):
+        return "{}\nSummary:\n{}\nTransactions:\n{}\nShipments:\n{}".format(
+            self.url,
+            "\n".join(["  " + line for line in self.summary.splitlines()]),
+            "\n".join(["  " + line for line in self.transactions.splitlines()]),
+            "\n".join(["  " + line for item in self.shipments for line in str(item).splitlines()])
+        )
+
     def to_json(self):
         return json.dumps(self, default=lambda o: o.__dict__)
 
@@ -55,11 +63,3 @@ class AmazonOrder:
     def promotion(self):
         matches = SUMMARY_PROMO_RE.findall(self.summary)
         return float(matches[0].replace(",", ".")) if len(matches) > 0 else 0.0
-
-    def notes(self):
-        return "\n\n".join([
-            self.url,
-            self.summary,
-            self.transactions,
-            *[item.notes() for item in self.shipments]
-        ])

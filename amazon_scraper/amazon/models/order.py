@@ -29,10 +29,12 @@ class AmazonOrder:
 
     @staticmethod
     def _parse_summary(summary: Tag):
+        def not_refund_popup(tag: Tag):
+            return tag.find(id="a-popover-orderRefundBreakdown") is None
         return "\n".join(list(filter(lambda x: x, [
             " ".join([
                 cell.text.strip() for cell in row.select("div.a-column span")
-            ]) for row in summary.select("div.a-row")
+            ]) for row in filter(not_refund_popup, summary.find_all("div", "a-row"))
         ])))
 
     @staticmethod

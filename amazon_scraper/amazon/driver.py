@@ -26,10 +26,13 @@ class AmazonDriver:
         driver.get(f"{host}/?language=en_GB")
         rand_sleep()
 
-        driver.find_element(
-            By.CSS_SELECTOR,
-            "#nav-signin-tooltip > a.nav-action-button"
-        ).click()
+        # Sometimes "Sign in" is the main button on the navigation bar tooltip, sometimes Registration.
+        # The only differences between both scenarious are:
+        # 1. Different link text
+        # 2. Different link href:
+        #   - https://www.amazon.de/-/en/ap/register?...
+        #   - https://www.amazon.de/-/en/ap/signin?...
+        driver.find_element(By.LINK_TEXT, "Sign in").click()
         rand_sleep()
 
         driver.find_element(By.ID, "ap_email").clear()

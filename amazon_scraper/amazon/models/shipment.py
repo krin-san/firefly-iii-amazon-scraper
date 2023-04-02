@@ -7,12 +7,13 @@ from bs4.element import Tag
 
 
 class AmazonShipment:
-    def __init__(self, number: int, items: List[AmazonShipmentItem]):
-        self.number = number
+    def __init__(self, title: str, items: List[AmazonShipmentItem]):
+        self.title = title
         self.items = items
 
     @staticmethod
-    def from_details(index: int, shipment: Tag, host: str):
+    def from_details(shipment: Tag, host: str):
+        title = shipment.select_one("div.shipment-top-row div.a-row")
         # div.a-box-inner div.a-fixed-right-grid.a-spacing-top-medium div.a-fixed-right-grid-inner.a-grid-vertical-align.a-grid-top div.a-fixed-right-grid-col.a-col-left div.a-row
         row = shipment.select_one("div.a-col-left div.a-row")
         # div.a-fixed-left-grid.a-spacing-base div.a-fixed-left-grid-inner div.a-fixed-left-grid-col.a-col-right div.a-row a.a-link-normal
@@ -27,7 +28,7 @@ class AmazonShipment:
         assert len(links) > 0, "No shipment items were found"
         assert len(links) == len(prices) == len(quantities), f"Counts should match: {len(links)} links, {len(prices)} prices, {len(quantities)} quantities"
         return AmazonShipment(
-            index + 1,
+            title.text.strip(),
             list(map(lambda x: AmazonShipmentItem.from_details(*x, host), zip(links, prices, quantities))),
         )
 
@@ -39,7 +40,7 @@ class AmazonShipment:
         })
 
     def __str__(self):
-        return f"Delivery {self.number}: {self.currency} {self.amount}" + "\n- " + "\n- ".join([str(item) for item in self.items])
+        return f"{self.title} | {self.currency} {self.amount}" + "\n- " + "\n- ".join([str(item) for item in self.items])
 
     @cached_property
     def currency(self):
@@ -48,3 +49,7 @@ class AmazonShipment:
     @cached_property
     def amount(self):
         return f'{sum([float(item.amount) * float(item.quantity) for item in self.items]):.2f}'
+
+    @cached_property
+    def is_refund(self):
+        return REFUND_RE.match(self.title) is not None

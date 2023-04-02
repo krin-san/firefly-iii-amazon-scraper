@@ -24,7 +24,7 @@ class AmazonOrder:
             # div#a-page div#orderDetails div.a-box-group.a-spacing-base div.a-box.a-last div.a-box-inner div.a-row.a-expander-container.a-expander-inline-container.show-if-no-js
             AmazonOrder._parse_transactions(details.select_one("div.a-box-group div.a-box.a-last div.a-row")),
             # div#a-page div#orderDetails [div.a-box-group.od-shipments]? div.a-box.shipment.shipment-is-delivered
-            list(map(lambda x: AmazonShipment.from_details(*x, host), enumerate(details.select("div.shipment")))),
+            AmazonOrder._join_refunds(map(lambda x: AmazonShipment.from_details(x, host), details.select("div.shipment"))),
         )
 
     @staticmethod
@@ -42,6 +42,16 @@ class AmazonOrder:
         return "\n".join([
             re.sub(r"\s+", " ", row.text.strip()) for row in transactions.select("div.a-row")
         ])
+
+    @staticmethod
+    def _join_refunds(shipments: List[AmazonShipment]):
+        result = []
+        for (index, shipment) in enumerate(shipments):
+            if shipment.is_refund:
+                result[-1].items.extend(shipment.items)
+            else:
+                result.append(shipment)
+        return result
 
     @staticmethod
     def from_json(json):

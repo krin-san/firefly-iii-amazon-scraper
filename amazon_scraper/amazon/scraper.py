@@ -8,6 +8,10 @@ from amazon_scraper.amazon.models import AmazonOrder
 from bs4 import BeautifulSoup
 
 
+class AmazonScraperSetupException(Exception):
+    "Raised when setup_driver finished with error"
+    pass
+
 class AmazonScraper:
     def __init__(
         self,
@@ -37,10 +41,14 @@ class AmazonScraper:
                 logging.error(f"[{order_id}] Loading from cache failed with error:\n{traceback.format_exc()}")
                 pass
 
-        if "driver" not in self.__dict__:
-            logging.debug("Setting up Selenium driver and logging in...")
-            self.setup_driver()
-            self.setup_driver = lambda: None
+        try:
+            if "driver" not in self.__dict__:
+                logging.debug("Setting up Selenium driver and logging in...")
+                self.setup_driver()
+                self.setup_driver = lambda: None
+        except:
+            self.cache.add("setup_driver.html", self.driver.driver.page_source)
+            raise AmazonScraperSetupException
 
         url = f"{self.host}/gp/your-account/order-details?orderID={order_id}"
         html = self._fetch_url(url)

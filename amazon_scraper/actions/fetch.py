@@ -8,6 +8,7 @@ from typing import List
 from amazon_scraper.actions.common import *
 from amazon_scraper.deps import Runner
 from amazon_scraper.firefly.models import *
+from amazon_scraper.amazon.scraper import AmazonScraperSetupException
 
 
 def run(runner: Runner):
@@ -41,6 +42,8 @@ def process_order(order_id: str, groups: List[TransactionGroup], runner: Runner)
     try:
         order = runner.amazon.scrape_order(order_id)
         logging.info(f"[{order_id}] Amazon order summary:\n" + pad_strings(order.summary))
+    except (KeyboardInterrupt, AmazonScraperSetupException):
+        raise
     except:
         logging.info(f"[{order_id}] Order scraping failed with error:\n{traceback.format_exc()}")
         return False
@@ -125,6 +128,6 @@ def match_tx_group(group: TransactionGroup, shipment: AmazonShipment, order_url:
 def commit_tx_group(group: TransactionGroup, runner: Runner):
     if runner.args.dry_run:
         logging.info(f"[{group.amazon_info.order_id}] Resulting transaction group:\n{format_item(group)}")
-        logging.debug(f"~ PUT: {str(group.to_json())}")
+        logging.info(f"~ PUT: {str(group.to_json())}")
     else:
         runner.firefly.update_transaction(group)

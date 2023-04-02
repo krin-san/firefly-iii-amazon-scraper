@@ -16,4 +16,4 @@ class Runner:
         self.amazon = amazon
         self.firefly = firefly
         self.args = args
-        self.base_query = "destination_account_starts:amazon"
+        self.base_query = "destination_account_starts:AMAZON"

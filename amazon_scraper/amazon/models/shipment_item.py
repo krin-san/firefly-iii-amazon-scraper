@@ -14,10 +14,12 @@ class AmazonShipmentItem:
 
     @staticmethod
     def from_details(link: Tag, price: Tag, quantity: Tag, host: str):
+        (currency, amount) = ITEM_PRICE_RE.match(price.text.strip()).groups()
         return AmazonShipmentItem(
             host + PRODUCT_HREF_RE.match(link["href"]).group(0),
             link.text.strip(),
-            *price.text.split(),
+            currency,
+            amount,
             int(quantity.text.strip()) if quantity is not None else 1,
         )
 
